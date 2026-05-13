@@ -1,0 +1,2 @@
+on post-fs-data
+    exec -- /vendor/bin/waydroid-init

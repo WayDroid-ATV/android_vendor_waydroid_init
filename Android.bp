@@ -1,0 +1,57 @@
+// Copyright (C) 2026 The WayDroid-ATV Project
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+package {
+    default_applicable_licenses: ["vendor_waydroid_waydroid_init_license"],
+}
+
+license {
+    name: "vendor_waydroid_waydroid_init_license",
+    visibility: [":__subpackages__"],
+    license_text: ["LICENSE"],
+}
+
+cc_defaults {
+    name: "waydroid-init-defaults",
+    cpp_std: "c++20",
+    cflags: ["-Wall", "-Werror"],
+    srcs: ["common/*.cpp"],
+    local_include_dirs: ["common"],
+}
+
+cc_binary {
+    name: "waydroid-preinit",
+    static_executable: true,
+
+    defaults: ["waydroid-init-defaults"],
+    srcs: ["waydroid-preinit/*.cpp"],
+
+    static_libs: ["libbase"],
+}
+
+cc_binary {
+    name: "waydroid-init",
+    vendor: true,
+
+    defaults: ["waydroid-init-defaults"],
+    srcs: ["waydroid-init/*.cpp"],
+
+    header_libs: ["libva_headers"],
+    shared_libs: ["libbase", "libcutils", "liblog"],
+
+    init_rc: ["waydroid-init.rc"],
+
+    arch: {
+        x86: {
+            header_libs: ["libva_headers"],
+            shared_libs: ["libbase", "libcutils", "liblog", "libva"],
+            cflags: ["-DUSE_VAAPI"],
+        },
+        x86_64: {
+            header_libs: ["libva_headers"],
+            shared_libs: ["libbase", "libcutils", "liblog", "libva"],
+            cflags: ["-DUSE_VAAPI"],
+        },
+    }
+}
