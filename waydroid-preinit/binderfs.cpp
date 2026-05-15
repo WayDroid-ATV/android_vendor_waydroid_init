@@ -22,35 +22,35 @@
 namespace BinderFS {
     static int controlFd = -1;
 
-    static void mountFS() {
+    static bool mountFS() {
         std::filesystem::create_directory("/dev/binderfs");
 
         if (mount("binder", "/dev/binderfs", "binder", 0, "stats=global") == -1) {
-            Log::err("Failed to mount binderfs: {}", strerror(errno));
-            return;
+            Log::err("Failed to mount binderfs (is the binder kernel module loaded?): {}", strerror(errno));
+            return false;
         }
 
         if (chmod("/dev/binderfs/binder-control", 0600) == -1) {
             Log::warn("Failed to set permission for binder controller: {}", strerror(errno));
         }
+
+        return true;
     }
 
-    static void openController() {
-        if (controlFd > 0) return;
-
+    static bool openController() {
         if ((controlFd = open("/dev/binderfs/binder-control", O_RDONLY | O_CLOEXEC)) == -1) {
             Log::err("Failed to open binder control device: {}", strerror(errno));
-            return;
+            return false;
         }
+
+        return true;
     }
 
     void createDevice() {
         binderNode nodeInfo;
 
-        mountFS();
-        openController();
-
-        if (controlFd == -1) return;
+        if (!mountFS()) return;
+        if (!openController()) return;
 
         for (const auto &symlinkPath : DevNode::binderNodes) {
             std::string nodeName   = symlinkPath.substr(5),
