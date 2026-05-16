@@ -58,11 +58,14 @@ namespace BinderFS {
 
             if (std::filesystem::exists(symlinkPath)) continue;
 
-            strlcpy(nodeInfo.name, nodeName.c_str(), NAME_MAX);
+            // Allocate binder device
+            if (!std::filesystem::exists(devicePath)) {
+                strlcpy(nodeInfo.name, nodeName.c_str(), NAME_MAX);
 
-            if (ioctl(controlFd, BINDER_CTL_ADD, &nodeInfo) == -1) {
-                Log::warn("Failed to allocate new binder device: {}", strerror(errno));
-                continue;
+                if (ioctl(controlFd, BINDER_CTL_ADD, &nodeInfo) == -1) {
+                    Log::warn("Failed to allocate new binder device: {}", strerror(errno));
+                    continue;
+                }
             }
 
             // Setup permission
