@@ -26,7 +26,7 @@
 #define GB(b) static_cast<uint64_t>(b * 1024ull * 1024 * 1024)
 
 namespace DalvikHeap {
-    static const std::array<dalvikHeapInfo, 7> dalvikHeapConfigs = {{
+    static constexpr std::array<dalvikHeapInfo, 7> dalvikHeapConfigs = {{
         {
             .minMemSize            = GB(15),
             .heapStartSize         = "32m",

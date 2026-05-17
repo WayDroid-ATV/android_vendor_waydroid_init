@@ -7,6 +7,7 @@
 #define _XOPEN_SOURCE 500
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <format>
 #include <string>
 #include <system_error>
@@ -18,22 +19,34 @@
 
 #include "log.h"
 #include "gpu_utils.h"
+#include "minigbm_intel_ids.h"
 
 void GpuUtils::getKernelDriver() {
     std::error_code       error;
-    std::string           symlinkPath = std::format("/sys/dev/char/{}:{}/device/driver", major(this->renderNodeInfo.st_rdev), minor(this->renderNodeInfo.st_rdev));
-    std::filesystem::path driverPath  = std::filesystem::read_symlink(symlinkPath, error);
+    std::filesystem::path devicePath(std::format("/sys/dev/char/{}:{}/device", major(this->renderNodeInfo.st_rdev), minor(this->renderNodeInfo.st_rdev))),
+                          driverPath(std::filesystem::read_symlink(devicePath / "driver", error));
 
     if (driverPath.empty()) {
         Log::err("Failed to read GPU driver name: {}", error.message());
         return;
     }
 
+    // Read device ID if exist
+    if (std::filesystem::exists(devicePath / "device")) {
+        std::string   deviceId;
+        std::ifstream deviceFile(devicePath / "device");
+
+        if (deviceFile.is_open()) {
+            std::getline(deviceFile, deviceId);
+            this->gpuDeviceId = std::stoi(deviceId, 0, 16);
+        }
+    }
+
     this->gpuKernelDriverName = driverPath.filename();
-    this->gpuRenderNodeMinor  = minor(this->renderNodeInfo.st_rdev);
+    Log::info("GPU kernel driver: {}", this->gpuKernelDriverName);
 }
 
-float GpuUtils::getIntelGpuGeneration() {
+float GpuUtils::getIntelGpuGeneration() const {
     std::string   line;
     std::ifstream capabilities;
     size_t        delim;
@@ -54,6 +67,17 @@ float GpuUtils::getIntelGpuGeneration() {
     }
 
     return -1;
+}
+
+std::string GpuUtils::getGralloc() const {
+    if (gpuKernelDriverName != "i915" && gpuKernelDriverName != "xe") return driverInfo.preferredGbm;
+
+    // Only use minigbm_intel on supported Intel GPUs
+    if (std::find(std::begin(minigbm_intel_ids), std::end(minigbm_intel_ids), gpuDeviceId) == std::end(minigbm_intel_ids)) {
+        return "minigbm_gbm_mesa";
+    } else {
+        return driverInfo.preferredGbm;
+    }
 }
 
 GpuUtils::GpuUtils(const std::string &renderNode, bool swRendering) {
@@ -81,7 +105,6 @@ GpuUtils::GpuUtils(const std::string &renderNode, bool swRendering) {
         if (e.driverName == gpuKernelDriverName) {
             if (e.minGeneration && e.minGeneration > gpuGeneration) continue;
 
-            Log::info("GPU kernel driver: {}", e.driverName);
             this->driverInfo = e;
             return;
         }

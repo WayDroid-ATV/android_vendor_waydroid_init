@@ -22,7 +22,7 @@ typedef struct {
 class GpuUtils {
     private:
         std::string renderNode;
-        uint8_t     gpuRenderNodeMinor = 0;
+        uint16_t    gpuDeviceId;
 
         struct stat renderNodeInfo;
 
@@ -48,11 +48,13 @@ class GpuUtils {
             { "default",     0, "angle", "pastel",       "default",         },
         }};
 
-        void  getKernelDriver();
-        float getIntelGpuGeneration();
+        void getKernelDriver();
+        float getIntelGpuGeneration() const;
 
     public:
-        std::string gpuKernelDriverName;
-        GpuDriverInfo driverInfo;
+        std::string   gpuKernelDriverName = "unknown";
+        GpuDriverInfo driverInfo = driverInfoList.back();
+
         GpuUtils(const std::string &renderNode, bool swRendering);
+        std::string getGralloc() const;
 };

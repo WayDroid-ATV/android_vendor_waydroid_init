@@ -22,7 +22,7 @@
 #include "dev_node.h"
 
 namespace DevNode {
-    static const std::array<entryInfo, 10> entryPerms = {{
+    static constexpr std::array<entryInfo, 10> entryPerms = {{
         { "/dev",                 AID_ROOT,   AID_SYSTEM, 01775 },
         { "/dev/device-mapper",   AID_ROOT,   AID_ROOT,   00600 },
         { "/dev/loop-control",    AID_ROOT,   AID_ROOT,   00600 },
@@ -32,7 +32,7 @@ namespace DevNode {
         { "/dev/dma_heap/system", AID_SYSTEM, AID_SYSTEM, 00444 },
     }};
 
-    static const std::array<entryInfo, 4> entryPermsForPrefix = {{
+    static constexpr std::array<entryInfo, 4> entryPermsForPrefix = {{
         { "/dev/media",      AID_SYSTEM, AID_CAMERA,   0660 },
         { "/dev/video",      AID_SYSTEM, AID_CAMERA,   0660 },
         { "/dev/dri/card",   AID_ROOT,   AID_GRAPHICS, 0666 },

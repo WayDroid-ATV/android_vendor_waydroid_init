@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     }
 
     settings.updateSetting("ro.hardware.egl",     gpuUtils.driverInfo.eglImpl);
-    settings.updateSetting("ro.hardware.gralloc", gpuUtils.driverInfo.preferredGbm);
+    settings.updateSetting("ro.hardware.gralloc", gpuUtils.getGralloc());
 
     if (gpuUtils.driverInfo.vkDriverName.has_value()) {
         settings.updateSetting("ro.hardware.vulkan", gpuUtils.driverInfo.vkDriverName.value());

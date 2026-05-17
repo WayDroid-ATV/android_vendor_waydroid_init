@@ -17,7 +17,7 @@ namespace DevNode {
         mode_t      mode;
     };
 
-    const std::array<std::string, 3> binderNodes = {
+    constexpr std::array<std::string, 3> binderNodes = {
         "/dev/binder",
         "/dev/hwbinder",
         "/dev/vndbinder",
