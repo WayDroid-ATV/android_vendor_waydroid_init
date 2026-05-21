@@ -97,22 +97,36 @@ int main(int argc, char **argv) {
         // Only default gralloc is supported when using software rendering
         settings.updateSetting("ro.hardware.gralloc", "default");
     } else {
-        // Configure c2.ffmpeg
+        // Configure c2.ffmpeg. Pick the final pixel format first, then write
+        // debug.ffmpeg-codec2.pixel_format only once. WaydroidSettings keeps
+        // user-provided values from /data/misc/waydroid_settings protected, so
+        // updating the same key twice would also block later auto-detected
+        // choices such as HEVC Main10/P010.
+        std::string codecPixelFormat;
+
         if (gpuUtils.driverInfo.driverName == "vmwgfx") {
             settings.updateSetting("media.sf.hwaccel", "0");
             settings.updateSetting("debug.ffmpeg-codec2.hwaccel.drm", "0");
-            settings.updateSetting("debug.ffmpeg-codec2.pixel_format", "RGB_565");
+            codecPixelFormat = "RGB_565";
         } else if (settings.getSetting("ro.hardware.gralloc") == "minigbm_gbm_mesa") {
             settings.updateSetting("media.sf.hwaccel", "1");
             settings.updateSetting("debug.ffmpeg-codec2.hwaccel.drm", "1");
-            settings.updateSetting("debug.ffmpeg-codec2.pixel_format", "RGBX_8888");
+            codecPixelFormat = "RGBX_8888";
         } else {
             settings.updateSetting("media.sf.hwaccel", "1");
             settings.updateSetting("debug.ffmpeg-codec2.hwaccel.drm", "1");
-            settings.updateSetting("debug.ffmpeg-codec2.pixel_format", "YUV_420");
+            codecPixelFormat = "YUV_420";
         }
 
-        settings.updateSetting("ro.waydroid.hwcodecs", HWCodecs(renderNode).getAvailHWCodecs());
+        HWCodecs hwCodecs(renderNode);
+        settings.updateSetting("ro.waydroid.hwcodecs", hwCodecs.getAvailHWCodecs());
+
+        std::string hwCodecProfiles = hwCodecs.getAvailHWCodecProfiles();
+        if (!hwCodecProfiles.empty()) {
+            settings.updateSetting("ro.waydroid.hwcodec_profiles", hwCodecProfiles);
+        }
+
+        settings.updateSetting("debug.ffmpeg-codec2.pixel_format", codecPixelFormat);
     }
 
     // Set dalvik props based on memory size
