@@ -19,6 +19,7 @@
 #include "hwcodecs.h"
 #include "settings.h"
 #include "ipconfig.h"
+#include "utils.h"
 
 #define LOG_TAG "waydroid-init"
 
@@ -37,12 +38,6 @@ inline static void stopService(const string &service) {
 
 inline static void startService(const string &service) {
     base::SetProperty("ctl.start", service);
-}
-
-inline static void bindMount(const string &src, const string &dst) {
-    if (mount(src.c_str(), dst.c_str(), (char *) NULL, MS_BIND, NULL) != 0) {
-        Log::err("mount {} -> {}: mount() failed: {}", src, dst, strerror(errno));
-    }
 }
 
 int main(int argc, char **argv) {
@@ -88,9 +83,9 @@ int main(int argc, char **argv) {
         Log::info("Vulkan support is missing");
         settings.updateSetting("ro.hardware.vulkan", "");
 
-        bindMount(EMPTY_PERMISSION_XML, "/vendor/etc/permissions/android.hardware.vulkan.level.xml");
-        bindMount(EMPTY_PERMISSION_XML, "/vendor/etc/permissions/android.hardware.vulkan.version.xml");
-        bindMount(EMPTY_PERMISSION_XML, "/vendor/etc/permissions/android.hardware.vulkan.compute.xml");
+        Utils::createBindMount(EMPTY_PERMISSION_XML, "/vendor/etc/permissions/android.hardware.vulkan.level.xml", MS_RDONLY);
+        Utils::createBindMount(EMPTY_PERMISSION_XML, "/vendor/etc/permissions/android.hardware.vulkan.version.xml", MS_RDONLY);
+        Utils::createBindMount(EMPTY_PERMISSION_XML, "/vendor/etc/permissions/android.hardware.vulkan.compute.xml", MS_RDONLY);
     }
 
     if (gpuUtils.driverInfo.driverName == "default") {
@@ -140,13 +135,13 @@ int main(int argc, char **argv) {
 
     if (hwcomposer == "drm_minigbm") {
         Log::info("Using drm_hwcomposer");
-        bindMount(EMPTY_VINTF_XML, WAYDROID_HIDL_XML);
+        Utils::createBindMount(EMPTY_VINTF_XML, WAYDROID_HIDL_XML, MS_RDONLY);
 
         stopService("vendor.hwcomposer-2-1");
         startService("vendor.hwcomposer-2-4");
     } else if (hwcomposer == "redroid") {
         Log::info("Using redroid hwcomposer");
-        bindMount(EMPTY_VINTF_XML, WAYDROID_HIDL_XML);
+        Utils::createBindMount(EMPTY_VINTF_XML, WAYDROID_HIDL_XML, MS_RDONLY);
     } else {
         Log::info("Using Waydroid hwcomposer");
         settings.updateSetting("ro.hardware.hwcomposer", "waydroid");

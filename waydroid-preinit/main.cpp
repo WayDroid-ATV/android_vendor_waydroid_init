@@ -20,18 +20,20 @@
 #include <unistd.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/sysmacros.h>
 
 #include "log.h"
 #include "binderfs.h"
 #include "dev_node.h"
+#include "utils.h"
 #include "waydroid_prop.h"
 
 #define LOG_TAG "waydroid-preinit"
 
 using namespace std;
 
-static bool moveDockerEtc() {
+static inline bool moveDockerEtc() {
     error_code error;
 
     if (mkdir("/dev/.docker", 0755) == -1) {
@@ -75,6 +77,35 @@ static bool moveDockerEtc() {
     }
 
     return true;
+}
+
+static inline bool remountProc() {
+    int sysNetDirFd;
+
+    // Backup RW copy of /proc/sys/net
+    if ((sysNetDirFd = syscall(SYS_open_tree, AT_FDCWD, "/proc/sys/net", OPEN_TREE_CLONE)) == -1) {
+        Log::err("open_tree() failed for /proc/sys/net: {}", strerror(errno));
+        return false;
+    }
+
+    // Remount /proc/sysrq-trigger and /proc/sys as read-only
+    if (!(
+        Utils::createBindMount("/proc/sys", "/proc/sys", MS_RDONLY) &&
+        Utils::createBindMount("/proc/sysrq-trigger", "/proc/sysrq-trigger", MS_RDONLY)
+    )) goto failed;
+
+    // Mount detached RW copy of /proc/sys/net
+    if (syscall(SYS_move_mount, sysNetDirFd, "", AT_FDCWD, "/proc/sys/net", MOVE_MOUNT_F_EMPTY_PATH) == -1) {
+        Log::err("Failed to mount /proc/sys/net: {}", strerror(errno));
+        goto failed;
+    }
+
+    close(sysNetDirFd);
+    return true;
+
+failed:
+    close(sysNetDirFd);
+    return false;
 }
 
 int main(int argc, char **argv) {
@@ -130,6 +161,10 @@ int main(int argc, char **argv) {
     } else {
         // Remove /dev bind-mounts for security
         DevNode::fixBindMountedNodes();
+
+        // Undo LXC /proc read-only layers (we will set up again later)
+        umount2("/proc/sys", MNT_DETACH);
+        umount2("/proc/sysrq-trigger", MNT_DETACH);
     }
 
     // Fix directory/node permissions
@@ -151,6 +186,9 @@ int main(int argc, char **argv) {
         Log::err("Failed to remount sysfs: {}", strerror(errno));
         return errno;
     }
+
+    // Remount /proc/sysrq-trigger and /proc/sys (except /proc/sys/net) as read-only for security
+    if (!remountProc()) return errno;
 
     // Write props back to waydroid.prop
     properties.saveProperties();
