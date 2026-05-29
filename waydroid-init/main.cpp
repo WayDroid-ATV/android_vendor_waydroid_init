@@ -14,6 +14,7 @@
 #include <android-base/properties.h>
 
 #include "log.h"
+#include "cpu_utils.h"
 #include "dalvik_heap.h"
 #include "gpu_utils.h"
 #include "hwcodecs.h"
@@ -112,6 +113,12 @@ int main(int argc, char **argv) {
 
     // Set dalvik props based on memory size
     DalvikHeap::setDalvikHeap();
+
+    // Set cgroup cpuset values based on available CPU cores
+    CpuUtils cpuinfo;
+
+    settings.updateSetting("ro.cgroup2.cpuset.default", cpuinfo.allCores);
+    settings.updateSetting("ro.cgroup2.cpuset.efficient", cpuinfo.efficientCores);
 
     // Start gralloc
     string grallocImpl = settings.getSetting("ro.hardware.gralloc");
