@@ -26,15 +26,14 @@ void HWCodecs::getHWCodecListV4L2() {
 
     int fd, ret;
 
-    for (int i = 0; i < 64; i++) {
-        videoDevice = std::format("/dev/video{}", i);
-        fmt.index   = 0;
+    for (const auto &entry : std::filesystem::directory_iterator("/dev")) {
+        videoDevice = entry.path().filename().string();
 
-        if (!std::filesystem::exists(videoDevice)) break;
+        if (!videoDevice.starts_with("video")) continue;
 
         Log::info("Open V4L2 device {}", videoDevice);
 
-        if ((fd = open(videoDevice.c_str(), O_RDONLY | O_CLOEXEC)) == -1) {
+        if ((fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC)) == -1) {
             Log::warn("Failed to open V4L2 device {}: {}", videoDevice, strerror(errno));
             continue;
         }
