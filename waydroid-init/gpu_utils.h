@@ -42,7 +42,7 @@ class GpuUtils {
             { "imagination", 0, "mesa",  "powervr_mesa", "minigbm_gbm_mesa" },
             { "amdgpu",      0, "mesa",  "radeon",       "minigbm"          },
             { "raedon",      0, "mesa",  std::nullopt,   "minigbm_gbm_mesa" },
-            { "virtio-gpu",  0, "mesa",  "virtio",       "minigbm",         },
+            { "virtio-pci",  0, "mesa",  "virtio",       "minigbm",         },
             { "tegra",       0, "mesa",  std::nullopt,   "minigbm_gbm_mesa" },
             { "vmwgfx",      0, "mesa",  std::nullopt,   "minigbm",         },
             { "default",     0, "angle", "pastel",       "default",         },
