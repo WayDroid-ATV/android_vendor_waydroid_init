@@ -181,6 +181,12 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Remount /sys/fs/cgroup as read-write for cgroup functionality
+    if (mount("none", "/sys/fs/cgroup", "cgroup2", MS_NODEV | MS_NOEXEC | MS_NOSUID | MS_REMOUNT, NULL) == -1) {
+        Log::err("Failed to remount cgroup: {}", strerror(errno));
+        return errno;
+    }
+
     // Remount /sys as read-only to prevent unexpected issues
     if (mount("sysfs", "/sys", "sysfs", MS_REMOUNT | MS_RDONLY, NULL) == -1) {
         Log::err("Failed to remount sysfs: {}", strerror(errno));
