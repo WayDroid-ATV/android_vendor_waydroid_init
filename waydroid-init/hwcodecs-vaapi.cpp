@@ -88,6 +88,14 @@ void HWCodecs::getHWCodecListVAAPI(const std::string &renderNode) {
         for (int j = 0; j < numEntrypoints; j++) {
             if (entrypoints[j] != VAEntrypointVLD) continue;
 
+            if (profiles[i] == VAProfileHEVCMain10) {
+                this->hevcMain10 = true;
+            } else if (profiles[i] == VAProfileVP9Profile2) {
+                this->vp9Profile2 = true;
+            } else if (profiles[i] == VAProfileAV1Profile0) {
+                this->av1Profile0 = true;
+            }
+
             auto it = VAProfileFourCC.find(profiles[i]);
 
             if (it != VAProfileFourCC.end()) {

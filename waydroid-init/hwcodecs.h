@@ -21,6 +21,9 @@
 class HWCodecs {
     private:
         std::vector<uint32_t> availHWCodecs;
+        bool hevcMain10 = false;
+        bool vp9Profile2 = false;
+        bool av1Profile0 = false;
 
         inline std::string convertFourCCToString(uint32_t fourCC) {
             return std::string(reinterpret_cast<const char *>(&fourCC), 4);
@@ -35,4 +38,8 @@ class HWCodecs {
     public:
         HWCodecs([[maybe_unused]] const std::string &renderNode);
         std::string getAvailHWCodecs();
+        std::string getAvailHWCodecProfiles();
+        bool supportsHevcMain10() const { return hevcMain10; }
+        bool supportsVp9Profile2() const { return vp9Profile2; }
+        bool supportsAv1Profile0() const { return av1Profile0; }
 };
