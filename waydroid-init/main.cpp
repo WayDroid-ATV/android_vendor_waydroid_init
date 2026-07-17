@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
 
     if (grallocImpl == "default") {
         Log::info("Using software rendering");
+        settings.updateSetting("ro.surface_flinger.supports_background_blur", "0");
     } else {
         stopService("vendor.gralloc-2-0");
 
