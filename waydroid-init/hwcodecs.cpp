@@ -31,3 +31,24 @@ std::string HWCodecs::getAvailHWCodecs() {
     Log::info("");
     return result;
 }
+
+
+std::string HWCodecs::getAvailHWCodecProfiles() {
+    std::string result;
+
+    Log::info("Supported HW codec profile(s) by GPU:");
+    Log::info("");
+
+    auto appendProfile = [&](const std::string &profile) {
+        Log::info("  {}", profile);
+        if (!result.empty()) result += ",";
+        result += profile;
+    };
+
+    if (hevcMain10) appendProfile("HEVCMain10");
+    if (vp9Profile2) appendProfile("VP9Profile2");
+    if (av1Profile0) appendProfile("AV1Profile0");
+
+    Log::info("");
+    return result;
+}
